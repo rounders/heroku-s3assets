@@ -10,11 +10,11 @@ module Heroku::Command
       
       output = extract_option("--output")
       if output
-        @assets_path = Dir.pwd + output
+        @assets_path = File.join(Dir.pwd, output)
         raise "#{assets_path} does not exist" unless File.directory?(@assets_path)
       else
         # use default
-        @assets_path = Dir.pwd + '/public/system'
+        @assets_path = File.join(Dir.pwd, 'public/system')
       end
       
       @assets_path
