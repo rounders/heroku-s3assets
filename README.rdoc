@@ -1,0 +1,36 @@
+= Heroku s3assets
+
+Plugin that provides the ability to download all production s3 assets to your local development app. A common scenario in development is to copy production data to development via the use of heroku db:pull. With this plugin one can also copy production assets stored on s3. 
+
+== Installation
+
+To install:
+
+    $ heroku plugins:install git@github.com:rounders/heroku_s3assets.git
+
+== Usage
+This plugin assumes that your production Heroku app is storing assets on Amazon s3 and that your Heroku app has the following three config vars properly defined: S3_BUCKET, S3_KEY and S3_SECRET ( see http://devcenter.heroku.com/articles/config-vars for more info)
+
+    $ heroku s3assets:pull [--bucket <bucket>] [--output <path>]
+
+To copy all s3 assets to default public/system folder
+
+    $ heroku s3assets:pull
+
+To copy all s3 assets to public/assets folder
+
+    $ heroku s3assets:pull --output public/assets
+
+If you do not have a S3_BUCKET config var set you can specify a specific bucket as follows:
+
+    $ heroku s3assets:pull --bucket mybucket
+
+== License
+
+Please see MIT-LICENSE for more details.
+
+== Copyright
+
+Copyright (c) 2010 Rounders Consulting Inc.
+
+
