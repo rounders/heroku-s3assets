@@ -1,6 +1,13 @@
 = Heroku s3assets
 
-Plugin that provides the ability to download all production s3 assets to your local development app. A common scenario in development is to copy production data to development via the use of heroku db:pull. With this plugin one can also copy production assets stored on s3. 
+Heroku Plugin that provides the ability to download all production s3 assets to your local development app. A common scenario in development is to copy production data to development via the use of heroku db:pull. With this plugin one can also copy production assets stored on s3.
+
+= Requirements
+
+1. Mac OS X, Linux, or UNIX.
+2. A Heroku account.
+3. aws/s3 gem needs to be installed. gem install aws-s3
+4. progress_bar gem needs to be installed. gem install progress_bar 
 
 == Installation
 

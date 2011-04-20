@@ -53,13 +53,20 @@ module Heroku::Command
       puts "There are #{bucket.objects.size} items in the #{s3_config[:bucket]} bucket"
 
       bucket.objects.each do |object|
+        filesize = object.about['content-length'].to_f
+        
         display "===== Saving #{object.key}"
+        bar = ProgressBar.new(filesize, :bar, :eta)
         object_path = File.join(assets_path,object.key)
         path = File.dirname(object_path)
         filename = File.basename(object_path)
         FileUtils::mkdir_p path, :verbose => false
+
         open(object_path, 'w') do |f|
-          f.puts object.value
+          object.value do |chunk|
+            bar.increment! chunk.size
+            f.puts chunk
+          end
         end
       end
       
