@@ -24,7 +24,7 @@ module Heroku::Command
       return @bucket unless @bucket.nil?
       bucket = extract_option("--bucket")
       @bucket = bucket ? bucket : heroku.config_vars(app)['S3_BUCKET']
-      raise "please specify a bucket via S3_BUCKET config var or through --bucket <bucketname>"
+      raise "please specify a bucket via S3_BUCKET config var or through --bucket <bucketname>" if @bucket.nil?
     end
     
     def pull_s3_assets
