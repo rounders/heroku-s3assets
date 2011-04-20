@@ -22,9 +22,11 @@ module Heroku::Command
     
     def bucket
       return @bucket unless @bucket.nil?
-      bucket = extract_option("--bucket")
-      @bucket = bucket ? bucket : heroku.config_vars(app)['S3_BUCKET']
+      b = extract_option("--bucket")
+      @bucket = b ? b : heroku.config_vars(app)['S3_BUCKET']
       raise "please specify a bucket via S3_BUCKET config var or through --bucket <bucketname>" if @bucket.nil?
+
+      return @bucket
     end
     
     def pull_s3_assets
@@ -51,7 +53,7 @@ module Heroku::Command
       puts "There are #{bucket.objects.size} items in the #{s3_config[:bucket]} bucket"
 
       bucket.objects.each do |object|
-        display "===== Saving #{object.key}", false
+        display "===== Saving #{object.key}"
         object_path = File.join(assets_path,object.key)
         path = File.dirname(object_path)
         filename = File.basename(object_path)
