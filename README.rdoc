@@ -16,9 +16,9 @@ To install:
     $ heroku plugins:install git@github.com:rounders/heroku_s3assets.git
 
 == Usage
-This plugin assumes that your production Heroku app is storing assets on Amazon s3 and that your Heroku app has the following three config vars properly defined: S3_BUCKET, S3_KEY and S3_SECRET ( see http://devcenter.heroku.com/articles/config-vars for more info)
+This plugin assumes that your production Heroku app is storing assets on Amazon s3 and that your Heroku app has the following three config vars properly defined: S3_BUCKET, S3_KEY and S3_SECRET ( see http://devcenter.heroku.com/articles/config-vars for more info). If any of the S3 config vars are not set you can specify them using command line options.
 
-    $ heroku s3assets:pull [--bucket <bucket>] [--output <path>]
+    $ heroku s3assets:pull [--bucket <bucket>] [--key <s3key> ] [--secret <s3secret> ][--output <path>]
 
 To copy all s3 assets to default public/system folder
 

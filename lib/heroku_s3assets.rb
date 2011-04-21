@@ -1,79 +1,84 @@
 module Heroku::Command
   class S3assets < BaseWithApp
+    
+    # s3assets:pull
+    #
+    # pull assets from s3 to local app
+    #
+    # 
+    # --key                # specify the s3 key, default is app config param S3_KEY
+    # --secret             # specify the s3 secret key, default is app config param S3_SECRET
+    # --bucket             # specify the s3 bucket to copy, default is app config param S3_BUCKET
+    # --output             # specify output directory, relative to app root. Default is public/system
+    #
+    
     def pull
-      pull_s3_assets
-    end
+      opts = parse_options
 
-    private
-    def assets_path
-      return @assets_path unless @assets_path.nil?
-      
-      output = extract_option("--output")
-      if output
-        @assets_path = File.join(Dir.pwd, output)
-        raise "#{assets_path} does not exist" unless File.directory?(@assets_path)
-      else
-        # use default
-        @assets_path = File.join(Dir.pwd, 'public/system')
-      end
-      
-      @assets_path
-    end
-    
-    def bucket
-      return @bucket unless @bucket.nil?
-      b = extract_option("--bucket")
-      @bucket = b ? b : heroku.config_vars(app)['S3_BUCKET']
-      raise "please specify a bucket via S3_BUCKET config var or through --bucket <bucketname>" if @bucket.nil?
-
-      return @bucket
-    end
-    
-    def pull_s3_assets
       display("===================================================================================")
-      display("Warning: files in '#{assets_path}' will be overwritten and will not be recoverable.")
+      display("Warning: files in '#{opts[:output_path]}' will be overwritten and will not be recoverable.")
       display("===================================================================================")
       
       if confirm_command
-        copy_all_s3_assets
+        copy_s3_bucket(opts[:s3_key], opts[:s3_secret], opts[:s3_bucket], opts[:output_path])
       end
     end
+
+    private
     
-    def s3_config
-      @s3_config ||= {
-        :key => heroku.config_vars(app)['S3_KEY'],
-        :secret => heroku.config_vars(app)['S3_SECRET'],
-        :bucket => bucket 
-      }
-    end
-    
-    def copy_all_s3_assets
-      AWS::S3::Base.establish_connection!(:access_key_id => s3_config[:key], :secret_access_key => s3_config[:secret])
-      bucket = AWS::S3::Bucket.find(s3_config[:bucket])
-      puts "There are #{bucket.objects.size} items in the #{s3_config[:bucket]} bucket"
+    def copy_s3_bucket(s3_key, s3_secret, s3_bucket, output_path)
+      AWS::S3::Base.establish_connection!(:access_key_id => s3_key, :secret_access_key => s3_secret)
+      bucket = AWS::S3::Bucket.find(s3_bucket)
+      puts "There are #{bucket.objects.size} items in the #{s3_bucket} bucket"
 
       bucket.objects.each do |object|
-        filesize = object.about['content-length'].to_f
-        
         display "===== Saving #{object.key}"
-        bar = ProgressBar.new(filesize, :bar, :eta)
-        object_path = File.join(assets_path,object.key)
-        path = File.dirname(object_path)
-        filename = File.basename(object_path)
-        FileUtils::mkdir_p path, :verbose => false
+        dest = File.join(output_path,object.key)
+        copy_s3_object(object,dest)
+      end
+    end
+    
+    def copy_s3_object(s3_object, to)
+      FileUtils::mkdir_p File.dirname(object_path), :verbose => false
 
-        open(object_path, 'w') do |f|
-          object.value do |chunk|
-            bar.increment! chunk.size
-            f.puts chunk
-          end
+      filesize = object.about['content-length'].to_f
+      bar = ProgressBar.new(filesize, :bar, :eta)
+
+      open(to, 'w') do |f|
+        s3_object.value do |chunk|
+          bar.increment! chunk.size
+          f.puts chunk
         end
       end
-      
+
     rescue Exception => ex
       puts "Error copying from s3: #{ex.message}"
       puts ex.backtrace
       ""
+    end
+    
+    def parse_options
+      opts = {}
+      opts[:s3_key] = extract_option("--key") || heroku.config_vars(app)['S3_KEY']
+      raise(CommandFailed, "please specify an S3 key via S3_KEY config var or through --key <s3key>") if opts[:s3_key].nil?
+
+      opts[:s3_secret] = extract_option("--secret") || heroku.config_vars(app)['S3_SECRET']
+      raise(CommandFailed, "please specify an S3 secret key via S3_SECRET config var or through --secret <s3secret>") if opts[:s3_secret].nil?
+
+      opts[:s3_bucket] =  extract_option("--bucket") || heroku.config_vars(app)['S3_BUCKET']
+      raise(CommandFailed, "please specify a bucket via S3_BUCKET config var or through --bucket <bucketname>") if opts[:s3_bucket].nil?
+
+      opts[:output_path] = File.join(Dir.pwd, extract_option("--output") || 'public/system')
+      if !File.directory?(opts[:output_path])
+        print "#{opts[:output_path]} does not exist"
+        if confirm("Would you like to create it? (y/N):")
+          FileUtils::mkdir_p opts[:output_path]
+        else
+          raise(CommandFailed, "please create the output path or specify a different one")
+        end
+      end
+      
+      opts
     end
     
     
