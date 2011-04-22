@@ -32,17 +32,19 @@ module Heroku::Command
       puts "There are #{bucket.objects.size} items in the #{s3_bucket} bucket"
 
       bucket.objects.each do |object|
-        display "===== Saving #{object.key}"
         dest = File.join(output_path,object.key)
         copy_s3_object(object,dest)
       end
     end
     
     def copy_s3_object(s3_object, to)
-      FileUtils::mkdir_p File.dirname(object_path), :verbose => false
+      
+      FileUtils::mkdir_p File.dirname(to), :verbose => false
 
-      filesize = object.about['content-length'].to_f
-      bar = ProgressBar.new(filesize, :bar, :eta)
+      filesize = s3_object.about['content-length'].to_f
+      display "Saving #{s3_object.key} (#{filesize} bytes):"
+      
+      bar = ProgressBar.new(filesize, :percentage, :counter)
 
       open(to, 'w') do |f|
         s3_object.value do |chunk|
@@ -50,11 +52,9 @@ module Heroku::Command
           f.puts chunk
         end
       end
+      
+      display "\n=======================================\n"
 
-    rescue Exception => ex
-      puts "Error copying from s3: #{ex.message}"
-      puts ex.backtrace
-      ""
     end
     
     def parse_options
@@ -70,11 +70,12 @@ module Heroku::Command
 
       opts[:output_path] = File.join(Dir.pwd, extract_option("--output") || 'public/system')
       if !File.directory?(opts[:output_path])
-        print "#{opts[:output_path]} does not exist"
+        print "#{opts[:output_path]} does not exist. "
         if confirm("Would you like to create it? (y/N):")
           FileUtils::mkdir_p opts[:output_path]
         else
           raise(CommandFailed, "please create the output path or specify a different one")
+          exit;
         end
       end
       
