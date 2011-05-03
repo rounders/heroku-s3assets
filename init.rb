@@ -10,5 +10,5 @@ rescue LoadError
   raise "progress_bar gem needs to be installed. gem install progress_bar"
 end
 
-require File.dirname(__FILE__) + '/lib/heroku_s3assets'
+require File.dirname(__FILE__) + '/lib/heroku/command/s3assets'
 require File.dirname(__FILE__) + '/lib/help'
